@@ -12,7 +12,12 @@ import shlex
 import shutil
 import subprocess
 import sys
-import tomllib
+try:
+    import tomllib  # Python 3.11+
+except ImportError:  # pragma: no cover - exercised on older supported Pythons
+    tomllib = None
+import ast
+import re
 import venv
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -349,14 +354,44 @@ def _codex_config_path() -> Path:
     return _codex_home() / "config.toml"
 
 
+def _minimal_toml_loads(text: str) -> Dict[str, object]:
+    """Parse the small provider subset needed on Python versions without tomllib."""
+    result: Dict[str, object] = {}
+    section: Dict[str, object] = result
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line:
+            continue
+        match = re.match(r"\[([^\]]+)\]", line)
+        if match:
+            section = result
+            for part in match.group(1).split("."):
+                section = section.setdefault(part.strip().strip('"'), {})  # type: ignore[assignment]
+            continue
+        if "=" not in line:
+            continue
+        key, raw_value = (part.strip() for part in line.split("=", 1))
+        key = key.strip('"')
+        try:
+            value = ast.literal_eval(raw_value)
+        except (SyntaxError, ValueError):
+            value = raw_value.strip('"')
+        section[key] = value
+    return result
+
+
 def _codex_config_credentials() -> Dict[str, Tuple[str, str]]:
     """Read image endpoint credentials from the selected Codex model provider."""
     path = _codex_config_path()
     if not path.is_file():
         return {}
     try:
-        data = tomllib.loads(path.read_text(encoding="utf-8"))
-    except (OSError, tomllib.TOMLDecodeError, UnicodeError):
+        text = path.read_text(encoding="utf-8")
+        if tomllib is not None:
+            data = tomllib.loads(text)
+        else:
+            data = _minimal_toml_loads(text)
+    except (OSError, UnicodeError, ValueError):
         return {}
     if not isinstance(data, dict):
         return {}

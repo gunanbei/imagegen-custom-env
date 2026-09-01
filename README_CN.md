@@ -7,7 +7,7 @@
 ## 环境要求
 
 - 已安装 Codex 内置的 `imagegen` skill。
-- 启动包装脚本需要 Python 3.11 或更高版本。图像生成依赖可由 skill 自动配置专用 Python 3.12 运行时。
+- 启动包装脚本需要 Python 3.8 或更高版本。图像生成依赖可由 skill 自动配置专用 Python 3.12 运行时。
 
 ## 安装
 
