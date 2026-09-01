@@ -1,0 +1,6 @@
+interface:
+  display_name: "Image Gen"
+  short_description: "Default image generation with custom env"
+  default_prompt: "Use $imagegen-custom-env to generate or edit images with credentials from project .env, then the selected provider in the default Codex config.toml, then platform globals (macOS: launchctl then global-env; Windows: windows-env then global-env), using the skill's managed Python runtime. Ask for user approval before running persist-env --yes or setup-python --yes."
+policy:
+  allow_implicit_invocation: true
