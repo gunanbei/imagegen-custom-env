@@ -2,7 +2,7 @@
 
 [中文](README.md) · [English](README_EN.md) · [日本語](README_JP.md)
 
-这是一个可独立安装的 Codex skill，为官方 `imagegen` 工作流增加项目级自定义凭据支持和专用 Python 运行时管理。
+An independently installable Codex skill that wraps the official `imagegen` workflow with project-aware custom credentials and a managed Python runtime.
 
 ## 环境要求
 
