@@ -77,14 +77,18 @@ python "$CODEX_HOME/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" r
 
 The wrapper sets `OPENAI_BASE_URL` and `OPENAI_API_KEY` for the official CLI, then forwards all arguments after `--` to `image_gen.py`.
 
-### Run isolation and success gate (mandatory)
+### Run isolation, in-flight handling, and success gate (mandatory)
 
-Treat every generation/edit attempt as an independent run. Before invoking the provider:
+Treat every generation/edit attempt as an independent run with an explicit state: `preflight`, `running`, `success`, `failed`, `blocked`, or `indeterminate`.
+
+Before invoking the provider:
 
 1. Create a run id (timestamp plus random suffix) and record the absolute target path, prompt hash, model, and requested size/format.
-2. Resolve and inspect the target before the call. Never use an existing file, a prior thread's output, a preview, or a guessed/default filename as evidence for the current run.
+2. Resolve and inspect the target before the call. This is **preflight evidence only**: a missing target is expected before a new run and must never be reported as a provider failure or used to trigger a retry.
 3. Prefer a new run-scoped filename such as `output/imagegen/<slug>-<run-id>.png`. If the user supplied an existing path, do not overwrite it unless replacement was explicitly requested; for replacement, record its pre-run SHA-256 and require the post-run hash to differ.
 4. Capture the output directory listing and target metadata before the call, preventing an unchanged file from being attributed to this run.
+
+Start only one provider command for a run and wait for that command to reach a terminal state. If the command tool returns a live session, poll that same session to completion; do not start another provider call while it is live. If the process is interrupted, the transport closes, a timeout occurs, or output is truncated before an unambiguous exit status and artifact receipt are available, mark the run `indeterminate`, not `failed`. Reconcile that original run first by checking the process/session, the exact recorded target, and any provider request/response metadata available. A locally missing target during reconciliation still does not prove that the remote request failed.
 
 A run is **successful only if all** postconditions hold:
 
@@ -94,9 +98,13 @@ A run is **successful only if all** postconditions hold:
 - it was created or modified during this run (mtime plus pre/post SHA-256; on replacement, the hash changed);
 - its file signature/decoder is valid for the requested format and actual pixel dimensions/aspect ratio match the request.
 
-If any postcondition fails, status is `failed` or `blocked`, never `success`. Do not search nearby directories for a “similar” image and do not attach an older image. A provider HTTP 2xx, a CLI message such as “completed”, or an image-view preview alone is insufficient.
+If any postcondition fails after a confirmed terminal command, status is `failed` or `blocked`, never `success`. Do not search nearby directories for a “similar” image and do not attach an older image. A provider HTTP 2xx, a CLI message such as “completed”, or an image-view preview alone is insufficient.
 
-For transient provider errors (including timeout/524), perform at most one controlled retry with a fresh run id and fresh target. If both attempts fail, report the exact blocker and stop; do not substitute an earlier output or claim completion. A fallback path gets its own run id and must pass the same gate.
+Retry rules are deliberately narrow:
+
+- Never retry from `preflight`, `running`, or `indeterminate` based only on a missing file, missing log line, delayed output, timeout, transport error, interruption, or partial/truncated output. These states may represent a remote request that already succeeded.
+- Retry at most once, with a fresh run id and fresh target, only after the original command has a confirmed terminal failure that is explicitly retryable and provides no concrete artifact for that run (for example, a provider rejection before generation). Record why the failure is terminal and retryable.
+- A fallback path gets its own run id and follows the same rules. If the original run is `indeterminate`, stop and report that ambiguity rather than launching fallback generation automatically.
 
 This skill also manages a global dedicated Python runtime for CLI fallback. Preferred Python resolution order:
 
@@ -187,4 +195,4 @@ When this skill runs, briefly state:
 - whether the final path used custom CLI credentials or official `$imagegen` fallback
 - final saved output paths, following the official `$imagegen` output handling rules
 
-For each run, also report a machine-checkable outcome: `run_id`, `status` (`success|failed|blocked`), provider path (`custom-cli|official-imagegen`), absolute artifact path, file size, SHA-256, actual dimensions/format, and any failed postcondition. Only include a download/preview link when `status=success`; otherwise explicitly state that no new image was delivered. When multiple referenced threads or same-prompt runs exist, state which run id produced the artifact to prevent cross-thread attribution.
+For each run, also report a machine-checkable outcome: `run_id`, `status` (`success|failed|blocked|indeterminate`), provider path (`custom-cli|official-imagegen`), absolute artifact path, file size, SHA-256, actual dimensions/format, and any failed postcondition or unresolved evidence. Only include a download/preview link when `status=success`; otherwise explicitly state that no new image was delivered. When multiple referenced threads or same-prompt runs exist, state which run id produced the artifact to prevent cross-thread attribution.
