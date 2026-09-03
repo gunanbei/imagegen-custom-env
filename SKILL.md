@@ -77,18 +77,17 @@ python "$CODEX_HOME/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" r
 
 The wrapper sets `OPENAI_BASE_URL` and `OPENAI_API_KEY` for the official CLI, then forwards all arguments after `--` to `image_gen.py`.
 
-### Run isolation, in-flight handling, and success gate (mandatory)
+### Lightweight run safety and success gate (mandatory)
 
-Treat every generation/edit attempt as an independent run with an explicit state: `preflight`, `running`, `success`, `failed`, `blocked`, or `indeterminate`.
+Use one run state at a time: `preflight`, `running`, `success`, `failed`, `blocked`, or `indeterminate`.
 
-Before invoking the provider:
+Before the provider call, perform only these checks:
 
-1. Create a run id (timestamp plus random suffix) and record the absolute target path, prompt hash, model, and requested size/format.
-2. Resolve and inspect the target before the call. This is **preflight evidence only**: a missing target is expected before a new run and must never be reported as a provider failure or used to trigger a retry.
-3. Prefer a new run-scoped filename such as `output/imagegen/<slug>-<run-id>.png`. If the user supplied an existing path, do not overwrite it unless replacement was explicitly requested; for replacement, record its pre-run SHA-256 and require the post-run hash to differ.
-4. Capture the output directory listing and target metadata before the call, preventing an unchanged file from being attributed to this run.
+1. Choose a fresh run-scoped output filename and record the requested model, size, and format. A missing fresh target is expected and is not a failure.
+2. Validate CLI arguments locally. In particular, do **not** pass `--input-fidelity` with `gpt-image-2`; that model always uses high input fidelity. Use `--input-fidelity` only with a model that supports it.
+3. If replacing a user-supplied file, record its pre-run hash; otherwise never overwrite it.
 
-Start only one provider command for a run and wait for that command to reach a terminal state. If the command tool returns a live session, poll that same session to completion; do not start another provider call while it is live. If the process is interrupted, the transport closes, a timeout occurs, or output is truncated before an unambiguous exit status and artifact receipt are available, mark the run `indeterminate`, not `failed`. Reconcile that original run first by checking the process/session, the exact recorded target, and any provider request/response metadata available. A locally missing target during reconciliation still does not prove that the remote request failed.
+Start exactly one provider command. Wait for that same command or live session to finish before doing anything else. A missing file, missing log line, delayed output, timeout, interruption, transport close, or truncated output before a clear terminal result is `indeterminate`, not `failed`; reconcile the original run before considering any new call.
 
 A run is **successful only if all** postconditions hold:
 
