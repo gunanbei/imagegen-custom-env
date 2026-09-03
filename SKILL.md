@@ -77,6 +77,27 @@ python "$CODEX_HOME/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" r
 
 The wrapper sets `OPENAI_BASE_URL` and `OPENAI_API_KEY` for the official CLI, then forwards all arguments after `--` to `image_gen.py`.
 
+### Run isolation and success gate (mandatory)
+
+Treat every generation/edit attempt as an independent run. Before invoking the provider:
+
+1. Create a run id (timestamp plus random suffix) and record the absolute target path, prompt hash, model, and requested size/format.
+2. Resolve and inspect the target before the call. Never use an existing file, a prior thread's output, a preview, or a guessed/default filename as evidence for the current run.
+3. Prefer a new run-scoped filename such as `output/imagegen/<slug>-<run-id>.png`. If the user supplied an existing path, do not overwrite it unless replacement was explicitly requested; for replacement, record its pre-run SHA-256 and require the post-run hash to differ.
+4. Capture the output directory listing and target metadata before the call, preventing an unchanged file from being attributed to this run.
+
+A run is **successful only if all** postconditions hold:
+
+- the provider command exits successfully and reports a concrete output artifact;
+- the reported artifact resolves to this run's target (or is explicitly copied to it);
+- the target exists, is a regular file, and has non-zero size;
+- it was created or modified during this run (mtime plus pre/post SHA-256; on replacement, the hash changed);
+- its file signature/decoder is valid for the requested format and actual pixel dimensions/aspect ratio match the request.
+
+If any postcondition fails, status is `failed` or `blocked`, never `success`. Do not search nearby directories for a “similar” image and do not attach an older image. A provider HTTP 2xx, a CLI message such as “completed”, or an image-view preview alone is insufficient.
+
+For transient provider errors (including timeout/524), perform at most one controlled retry with a fresh run id and fresh target. If both attempts fail, report the exact blocker and stop; do not substitute an earlier output or claim completion. A fallback path gets its own run id and must pass the same gate.
+
 This skill also manages a global dedicated Python runtime for CLI fallback. Preferred Python resolution order:
 
 1. `--python`
@@ -165,3 +186,5 @@ When this skill runs, briefly state:
 - which credential source was used: `.env`, `codex-config`, `launchctl`, `windows-env`, `global-env`, or mixed
 - whether the final path used custom CLI credentials or official `$imagegen` fallback
 - final saved output paths, following the official `$imagegen` output handling rules
+
+For each run, also report a machine-checkable outcome: `run_id`, `status` (`success|failed|blocked`), provider path (`custom-cli|official-imagegen`), absolute artifact path, file size, SHA-256, actual dimensions/format, and any failed postcondition. Only include a download/preview link when `status=success`; otherwise explicitly state that no new image was delivered. When multiple referenced threads or same-prompt runs exist, state which run id produced the artifact to prevent cross-thread attribution.
