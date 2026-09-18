@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AICommitProjectHistory">
+    <option name="records">
+      <list>
+        <HistoryRecord>
+          <option name="createdAtMillis" value="1788441900187" />
+          <option name="diffSizeBucket" value="small" />
+          <option name="id" value="d8c9da12-0fc3-4960-91e7-e24733797c38" />
+          <option name="message" value="docs(skill): clarify run isolation and in-flight handling&#10;&#10;- Add explicit run states, including indeterminate&#10;- Require provider session reconciliation before retrying&#10;- Narrow retry conditions and prevent duplicate provider calls&#10;- Include unresolved evidence in machine-checkable outcomes" />
+          <option name="modelId" value="gpt-5.6-sol" />
+          <option name="providerLabel" value="OpenAI" />
+          <option name="sessionId" value="5" />
+          <option name="source" value="commit_action" />
+        </HistoryRecord>
+        <HistoryRecord>
+          <option name="createdAtMillis" value="1788434525023" />
+          <option name="diffSizeBucket" value="small" />
+          <option name="id" value="43473737-e245-4c51-a75a-922e6f12e109" />
+          <option name="message" value="chore: update display name to Image Gen CustomDev" />
+          <option name="modelId" value="gpt-5.6-sol" />
+          <option name="providerLabel" value="OpenAI" />
+          <option name="sessionId" value="1" />
+          <option name="source" value="commit_action" />
+        </HistoryRecord>
+      </list>
+    </option>
+  </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="6692a211-0dec-4239-8dd9-a09ead16b5b5" name="更改" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="develop" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;gunanbei&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/gunanbei/imagegen-custom-env.git&quot;,
+    &quot;accountId&quot;: &quot;bee17b50-d914-42c0-b58c-c16f949068d5&quot;
+  }
+}</component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="customMavenHome" value="$USER_HOME$/coding/env/maven/apache-maven-3.9.11" />
+        <option name="mavenHomeTypeForPersistence" value="CUSTOM" />
+        <option name="useMavenConfig" value="false" />
+        <option name="userSettingsFile" value="$USER_HOME$/coding/env/maven/apache-maven-3.9.11/conf/settings.xml" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3IiOBKXHGswRdRSUliTkChlCCzn" />
+  <component name="ProjectViewState">
+    <option name="openDirectoriesWithSingleClick" value="true" />
+    <option name="showLibraryContents" value="true" />
+    <option name="showMembers" value="true" />
+    <option name="showVisibilityIcons" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "qoder.settings.plugin"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-34e2839f716b-intellij.indexing.shared.core-IU-262.9437.185" />
+        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-IU-262.9437.185" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="StructureViewState">
+    <option name="selectedTab" value="逻辑" />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="6692a211-0dec-4239-8dd9-a09ead16b5b5" name="更改" comment="" />
+      <created>1788243786397</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1788243786397</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="docs(skill): 更新技能文档添加运行隔离和成功检查机制&#10;&#10;- 添加运行隔离和成功门控的详细要求&#10;- 定义独立运行ID生成和目标路径记录规则&#10;- 规定运行前目标文件检查和哈希验证流程&#10;- 明确运行后条件验证包括退出状态、文件存在性、修改时间戳等&#10;- 添加重试机制和回退路径的处理要求&#10;- 补充机器可检查的结果报告格式和状态字段说明" />
+    <MESSAGE value="chore: update display name to Image Gen CustomDev" />
+    <MESSAGE value="docs(imagegen): 更新图像生成运行隔离和状态管理文档&#10;&#10;- 添加飞行中处理和明确的状态定义（预检、运行中、成功、失败、阻塞或不确定）&#10;- 强调预检证据仅用于缺失目标文件的预期情况，不得报告为提供程序故障&#10;- 明确单个运行只启动一个提供程序命令并等待其达到终端状态&#10;- 规定进程中断或超时时标记为不确定状态而非失败状态&#10;- 细化重试规则，禁止基于缺失文件等情况进行重试&#10;- 更新机器可检查结果报告，添加不确定状态和未解决证据的记录要求" />
+    <MESSAGE value="refactor(docs): 简化运行安全性和成功检查流程&#10;&#10;- 将独立运行隔离、飞行中处理和成功检查重命名为轻量级运行安全性&#10;- 简化运行状态管理，每次只使用一个运行状态&#10;- 优化预检验证逻辑，仅执行必要的本地参数检查&#10;- 简化文件名选择和哈希记录逻辑&#10;- 优化提供商命令调用和完成等待机制&#10;- 改进不确定状态的处理方式，避免重复调用" />
+    <MESSAGE value="docs(imagegen-custom-env): 更新文档以反映官方图像生成适配器功能&#10;&#10;- 简化描述为官方图像生成技能的自定义凭证适配器&#10;- 移除过时的执行流程和复杂的凭证回退逻辑&#10;- 更新为仅处理凭证解析和官方CLI调用委托&#10;- 删除冗余的Python运行时管理和诊断命令说明&#10;- 重写文档结构以突出与官方imagegen技能的所有权边界&#10;- 移除详细的执行状态管理规则，改为依赖官方工作流" />
+    <option name="LAST_COMMIT_MESSAGE" value="docs(imagegen-custom-env): 更新文档以反映官方图像生成适配器功能&#10;&#10;- 简化描述为官方图像生成技能的自定义凭证适配器&#10;- 移除过时的执行流程和复杂的凭证回退逻辑&#10;- 更新为仅处理凭证解析和官方CLI调用委托&#10;- 删除冗余的Python运行时管理和诊断命令说明&#10;- 重写文档结构以突出与官方imagegen技能的所有权边界&#10;- 移除详细的执行状态管理规则，改为依赖官方工作流" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>

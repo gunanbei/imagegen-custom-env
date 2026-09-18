@@ -1,0 +1,12 @@
+{
+  "UserPromptSubmit": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python3 /absolute/path/to/imagegen-custom-env/hooks/imagegen-priority-hook.py"
+        }
+      ]
+    }
+  ]
+}

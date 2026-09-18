@@ -36,6 +36,32 @@ ln -s /absolute/path/to/imagegen-custom-env \
 python "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" doctor
 ```
 
+## 可选：安装图像优先 Hook
+
+仓库附带一个宿主级 `UserPromptSubmit` Hook。Skill 更新/克隆**不会自动修改宿主配置**；
+首次安装 Hook 时，安装器会先申请确认，确认后才写入。它只在检测到图像生成/编辑意图时注入
+`$imagegen-custom-env` 优先规则，不会覆盖已有 Hook，也不能强制替换宿主内置的
+`image_gen` 工具。安装前请确认你希望修改 `~/.codex/hooks.json`：
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/install_hook.py"
+```
+
+上面的命令可从任意目录执行。非交互环境（例如脚本、CI）不会擅自写入，需显式确认：
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/install_hook.py" --yes
+```
+
+脚本会先创建 `hooks.json.bak`；移除本项目 Hook（保留其他 Hook）可运行：
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/install_hook.py" --remove
+```
+
+修改宿主 Hook 后请重启 Codex。若当前宿主不支持 `hookSpecificOutput`，该 Hook 会安全地
+返回空对象，不影响普通请求。
+
 仓库根目录就是 skill 根目录。`SKILL.md`、`agents/openai.yaml` 和 `scripts/imagegen_custom_env.py` 均为必需运行文件。本地密钥、专用虚拟环境和生成的字节码不会纳入版本控制。
 
 ## 版本管理
@@ -46,4 +72,3 @@ python "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_
 git tag -a v1.0.0 -m "imagegen-custom-env v1.0.0"
 git push origin main --tags
 ```
-
