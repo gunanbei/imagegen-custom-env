@@ -36,8 +36,13 @@ ln -s /absolute/path/to/imagegen-custom-env \
 ## Verify
 
 ```bash
-python "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" doctor
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" doctor
 ```
+
+For generation, `run` selects the dedicated Python runtime and locates the
+official `image_gen.py` itself. The first token after `--` must therefore be
+`generate`, `edit`, or `generate-batch`; do not pass `python3` or an
+`image_gen.py` path again.
 
 The repository root is the skill root. `SKILL.md`, `agents/openai.yaml`, and
 `scripts/imagegen_custom_env.py` are all required runtime files. Local secrets,
@@ -52,4 +57,3 @@ Use semantic-version Git tags for releases, for example:
 git tag -a v1.0.0 -m "imagegen-custom-env v1.0.0"
 git push origin main --tags
 ```
-

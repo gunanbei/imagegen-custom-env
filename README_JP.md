@@ -33,8 +33,12 @@ ln -s /absolute/path/to/imagegen-custom-env \
 ## 検証
 
 ```bash
-python "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" doctor
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" doctor
 ```
+
+生成時は `run` が専用 Python と公式 `image_gen.py` を自動的に選択します。
+`--` の直後は `generate`、`edit`、または `generate-batch` から始め、
+`python3` や `image_gen.py` のパスをもう一度渡さないでください。
 
 リポジトリのルートがそのまま skill のルートです。`SKILL.md`、`agents/openai.yaml`、`scripts/imagegen_custom_env.py` はすべて必須の実行ファイルです。ローカルの秘密情報、管理対象の仮想環境、生成されたバイトコードはバージョン管理から除外されます。
 
@@ -46,4 +50,3 @@ python "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_
 git tag -a v1.0.0 -m "imagegen-custom-env v1.0.0"
 git push origin main --tags
 ```
-

@@ -33,7 +33,15 @@ ln -s /absolute/path/to/imagegen-custom-env \
 ## 验证
 
 ```bash
-python "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" doctor
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" doctor
+```
+
+实际生成时，`run` 会自行选择专用 Python 并定位官方 `image_gen.py`。因此 `--` 后必须直接从
+`generate`、`edit` 或 `generate-batch` 开始；不要再次传入 `python3` 或 `image_gen.py` 路径：
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" run -- generate \
+  --prompt "A misty mountain sunrise" --out output/imagegen/misty-mountain-sunrise.png
 ```
 
 ## 可选：安装图像优先 Hook

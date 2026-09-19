@@ -40,10 +40,10 @@ Let the official `$imagegen` skill determine the task, prompt, arguments, and va
 When a complete custom credential pair is available, the only execution override is that the actual image request must use the official Image Gen CLI through this adapter, because the built-in image tool cannot receive a custom `OPENAI_BASE_URL`:
 
 ```bash
-python "$CODEX_HOME/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" run -- <official-imagegen-cli-arguments>
+python3 "$CODEX_HOME/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" run -- generate <official-imagegen-cli-arguments>
 ```
 
-Pass the official CLI arguments through unchanged. The adapter injects `OPENAI_BASE_URL` and `OPENAI_API_KEY`, then invokes the unmodified official `image_gen.py`.
+The adapter owns the interpreter and the path to the official `image_gen.py`. The first token after `--` must be the official CLI subcommand `generate`, `edit`, or `generate-batch`; pass only the remaining CLI arguments after that subcommand. Do **not** put `python`, `python3`, or `image_gen.py` after `run --` (for example, never use `run -- python3 .../image_gen.py generate ...`). The adapter injects `OPENAI_BASE_URL` and `OPENAI_API_KEY`, then invokes the unmodified official `image_gen.py`.
 
 Do not routinely run `doctor`, `--help`, dry-run commands, source-file searches, directory inventories, or extra preflight checks. Use diagnostics only after a concrete credential or runtime failure. In particular, do not invent parameters such as `--input-fidelity`; use only arguments selected under the official skill's current rules.
 

@@ -1009,13 +1009,46 @@ def _normalize_remainder(args: List[str]) -> List[str]:
     return args
 
 
+def _validate_forwarded_args(args: Sequence[str]) -> Optional[str]:
+    """Reject a second interpreter/script prefix before argparse sees it.
+
+    ``run`` owns both the Python interpreter and the official ``image_gen.py``
+    path.  Everything after ``--`` must therefore be image_gen.py *arguments*
+    and start with one of its subcommands, not another ``python`` invocation.
+    Keeping this check here turns the otherwise confusing ``invalid choice:
+    'python3'`` error into an actionable invocation error.
+    """
+    if not args:
+        return "run requires imagegen arguments after -- (generate, edit, or generate-batch)"
+
+    first = str(args[0])
+    first_name = Path(first).name.lower()
+    interpreter_names = {"python", "python3", "python3.11", "python3.12", "python3.13"}
+    if first_name in interpreter_names or first_name.startswith("python3."):
+        return (
+            "do not pass a Python executable after `run --`; the adapter selects it automatically. "
+            "Use `run -- generate ...`"
+        )
+    if first_name == "image_gen.py":
+        return (
+            "do not pass the image_gen.py path after `run --`; the adapter locates it automatically. "
+            "Use `run -- generate ...`"
+        )
+    if first not in {"generate", "edit", "generate-batch"}:
+        return (
+            f"unexpected first imagegen argument {first!r}; expected `generate`, `edit`, or `generate-batch`"
+        )
+    return None
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
     if hasattr(args, "imagegen_args"):
         args.imagegen_args = _normalize_remainder(args.imagegen_args)
-        if not args.imagegen_args:
-            parser.error("run requires imagegen arguments after --")
+        validation_error = _validate_forwarded_args(args.imagegen_args)
+        if validation_error:
+            parser.error(validation_error)
         print(
             "Forwarding to official imagegen CLI: "
             + shlex.join([str(_official_cli()), *args.imagegen_args]),
