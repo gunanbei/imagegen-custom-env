@@ -2,8 +2,8 @@
 
 [中文](README.md) · [English](README_EN.md) · [日本語](README_JP.md)
 
-An independently installable Codex skill that wraps the official `imagegen`
-workflow with project-aware custom credentials and a managed Python runtime.
+An independently installable Codex skill that bundles `scripts/image_gen.py`
+and provides project-aware custom credentials with a managed Python runtime.
 
 ## Requirements
 
@@ -39,8 +39,8 @@ ln -s /absolute/path/to/imagegen-custom-env \
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" doctor
 ```
 
-For generation, `run` selects the dedicated Python runtime and locates the
-official `image_gen.py` itself. The first token after `--` must therefore be
+For generation, `run` selects the dedicated Python runtime and only invokes
+the bundled `scripts/image_gen.py`. The first token after `--` must therefore be
 `generate`, `edit`, or `generate-batch`; do not pass `python3` or an
 `image_gen.py` path again.
 

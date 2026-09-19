@@ -36,7 +36,7 @@ ln -s /absolute/path/to/imagegen-custom-env \
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" doctor
 ```
 
-生成時は `run` が専用 Python と公式 `image_gen.py` を自動的に選択します。
+生成時は `run` が専用 Python を選択し、この Skill に内蔵した `scripts/image_gen.py` だけを呼び出します。
 `--` の直後は `generate`、`edit`、または `generate-batch` から始め、
 `python3` や `image_gen.py` のパスをもう一度渡さないでください。
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the official imagegen CLI with project-preferred OpenAI env vars."""
+"""Run this skill's bundled imagegen CLI with custom OpenAI env vars."""
 
 from __future__ import annotations
 
@@ -63,8 +63,10 @@ def _codex_home() -> Path:
     return Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex").expanduser()
 
 
-def _official_cli() -> Path:
-    return _codex_home() / "skills" / ".system" / "imagegen" / "scripts" / "image_gen.py"
+def _bundled_cli() -> Path:
+    # Keep the executable image workflow inside this skill; runtime execution
+    # does not depend on a separately installed host skill.
+    return _skill_root() / "scripts" / "image_gen.py"
 
 
 def _skill_root() -> Path:
@@ -709,10 +711,10 @@ def doctor(args: argparse.Namespace) -> int:
         else:
             shown = value or "missing"
         print(f"{key}: {shown} ({sources.get(key, 'missing')})")
-    if not _official_cli().is_file():
-        print(f"official_cli: missing at {_official_cli()}", file=sys.stderr)
+    if not _bundled_cli().is_file():
+        print(f"bundled_cli: missing at {_bundled_cli()}", file=sys.stderr)
         return 2
-    print(f"official_cli: {_official_cli()}")
+    print(f"bundled_cli: {_bundled_cli()}")
     if args.verbose:
         for candidate, ok, reason in checks:
             marker = "ok" if ok else "no"
@@ -738,15 +740,15 @@ def doctor(args: argparse.Namespace) -> int:
 
 
 def run(args: argparse.Namespace) -> int:
-    cli = _official_cli()
+    cli = _bundled_cli()
     if not cli.is_file():
-        print(f"Official imagegen CLI not found: {cli}", file=sys.stderr)
+        print(f"Bundled imagegen CLI not found: {cli}", file=sys.stderr)
         return 2
 
     python_exe, checks, code = _ensure_runtime(args.python, install=not getattr(args, "no_auto_setup", False))
     if python_exe is None:
         print(
-            "No compatible Python runtime found for the official imagegen CLI.",
+            "No compatible Python runtime found for the bundled imagegen CLI.",
             file=sys.stderr,
         )
         for candidate, ok, reason in checks:
@@ -759,7 +761,7 @@ def run(args: argparse.Namespace) -> int:
         missing = ", ".join(key for key in REQUIRED_KEYS if not env_values.get(key))
         print(
             "Custom image endpoint credentials are unavailable "
-            f"(missing: {missing}). Use the official $imagegen fallback.",
+            f"(missing: {missing}). Custom-endpoint execution cannot continue.",
             file=sys.stderr,
         )
         persist_values, persist_sources, persist_target = _persistable_project_values(Path(args.cwd))
@@ -811,7 +813,7 @@ def run(args: argparse.Namespace) -> int:
     if _looks_like_provider_failure(completed.returncode, completed.stderr + "\n" + completed.stdout):
         print(
             "Custom image endpoint failed with an API/auth/network/provider error. "
-            "Use the official $imagegen fallback for this request.",
+            "Bundled imagegen execution cannot continue for this request.",
             file=sys.stderr,
         )
         return 21
@@ -915,7 +917,7 @@ def show_config(_args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Resolve custom OpenAI image env vars and run the official imagegen CLI.",
+        description="Resolve custom OpenAI image env vars and run the bundled imagegen CLI.",
     )
     parser.add_argument(
         "--cwd",
@@ -924,7 +926,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--python",
-        help="Python executable used to run the official imagegen CLI.",
+        help="Python executable used to run the bundled imagegen CLI.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -932,7 +934,7 @@ def build_parser() -> argparse.ArgumentParser:
     doctor_parser.add_argument("--verbose", action="store_true", help="Show all python compatibility checks.")
     doctor_parser.set_defaults(func=doctor)
 
-    run_parser = subparsers.add_parser("run", help="Run official imagegen CLI with custom env.")
+    run_parser = subparsers.add_parser("run", help="Run bundled imagegen CLI with custom env.")
     run_parser.add_argument(
         "imagegen_args",
         nargs=argparse.REMAINDER,
@@ -1012,7 +1014,7 @@ def _normalize_remainder(args: List[str]) -> List[str]:
 def _validate_forwarded_args(args: Sequence[str]) -> Optional[str]:
     """Reject a second interpreter/script prefix before argparse sees it.
 
-    ``run`` owns both the Python interpreter and the official ``image_gen.py``
+    ``run`` owns both the Python interpreter and the bundled ``image_gen.py``
     path.  Everything after ``--`` must therefore be image_gen.py *arguments*
     and start with one of its subcommands, not another ``python`` invocation.
     Keeping this check here turns the otherwise confusing ``invalid choice:
@@ -1050,8 +1052,8 @@ def main() -> int:
         if validation_error:
             parser.error(validation_error)
         print(
-            "Forwarding to official imagegen CLI: "
-            + shlex.join([str(_official_cli()), *args.imagegen_args]),
+            "Forwarding to bundled imagegen CLI: "
+            + shlex.join([str(_bundled_cli()), *args.imagegen_args]),
             file=sys.stderr,
         )
     return args.func(args)

@@ -2,11 +2,11 @@
 
 [中文](README.md) · [English](README_EN.md) · [日本語](README_JP.md)
 
-这是一个可独立安装的 Codex skill，为官方 `imagegen` 工作流增加项目级自定义凭据支持和专用 Python 运行时管理。
+这是一个可独立安装的 Codex skill，内置 `scripts/image_gen.py`，并提供项目级自定义凭据支持和专用 Python 运行时管理。
 
 ## 环境要求
 
-- 已安装 Codex 内置的 `imagegen` skill。
+- Python 3.8 或更高版本。
 - 启动包装脚本需要 Python 3.8 或更高版本。图像生成依赖可由 skill 自动配置专用 Python 3.12 运行时。
 
 ## 安装
@@ -36,7 +36,7 @@ ln -s /absolute/path/to/imagegen-custom-env \
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" doctor
 ```
 
-实际生成时，`run` 会自行选择专用 Python 并定位官方 `image_gen.py`。因此 `--` 后必须直接从
+实际生成时，`run` 会自行选择专用 Python 并调用 Skill 内置的 `scripts/image_gen.py`。因此 `--` 后必须直接从
 `generate`、`edit` 或 `generate-batch` 开始；不要再次传入 `python3` 或 `image_gen.py` 路径：
 
 ```bash
@@ -48,8 +48,8 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen
 
 仓库附带一个宿主级 `UserPromptSubmit` Hook。Skill 更新/克隆**不会自动修改宿主配置**；
 首次安装 Hook 时，安装器会先申请确认，确认后才写入。它只在检测到图像生成/编辑意图时注入
-`$imagegen-custom-env` 优先规则，不会覆盖已有 Hook，也不能强制替换宿主内置的
-`image_gen` 工具。安装前请确认你希望修改 `~/.codex/hooks.json`：
+`$imagegen-custom-env` 使用规则，不会覆盖已有 Hook，也不能仅靠提示强制替换宿主工具；
+真正执行时 wrapper 只调用仓库内置的 `scripts/image_gen.py`。安装前请确认你希望修改 `~/.codex/hooks.json`：
 
 ```bash
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/install_hook.py"
@@ -70,7 +70,9 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/install_
 修改宿主 Hook 后请重启 Codex。若当前宿主不支持 `hookSpecificOutput`，该 Hook 会安全地
 返回空对象，不影响普通请求。
 
-仓库根目录就是 skill 根目录。`SKILL.md`、`agents/openai.yaml` 和 `scripts/imagegen_custom_env.py` 均为必需运行文件。本地密钥、专用虚拟环境和生成的字节码不会纳入版本控制。
+仓库根目录就是 skill 根目录。`SKILL.md`、`agents/openai.yaml`、`scripts/imagegen_custom_env.py` 和内置的 `scripts/image_gen.py` 均为必需运行文件。本地密钥、专用虚拟环境和生成的字节码不会纳入版本控制。
+
+内置 CLI 同时支持 OpenAI Images API 的 `data[].b64_json` 和 `data[].url` 响应；URL 图片会先下载到本地，再按相同流程写入输出文件。
 
 ## 版本管理
 

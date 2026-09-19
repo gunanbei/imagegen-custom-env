@@ -1,22 +1,22 @@
 ---
 name: "imagegen-custom-env"
-description: "Use the official Image Gen skill with a custom OpenAI-compatible base URL and API key. This adapter only resolves and injects credentials; the official imagegen skill owns prompting, model and parameter choices, execution, retries, output handling, and validation."
+description: "Use the bundled Image Gen CLI with a custom OpenAI-compatible base URL and API key. This adapter only resolves and injects credentials; the imagegen workflow owns prompting, model and parameter choices, execution, retries, output handling, and validation."
 ---
 
 # ImageGen Custom Env
 
-Use this skill when an image generation or editing request should use custom OpenAI-compatible credentials.
+Use this skill when an image generation or editing request should use custom OpenAI-compatible credentials. The executable CLI is bundled at `scripts/image_gen.py`.
 
 ## Ownership boundary
 
-Before acting, read and follow the official `$imagegen` skill at `$CODEX_HOME/skills/.system/imagegen/SKILL.md`. Treat it as the authority for:
+This Skill is self-contained for CLI execution. Treat this Skill and its bundled `scripts/image_gen.py` as the authority for:
 
 - generate versus edit decisions;
-- built-in versus CLI workflow rules, except for the custom-credential override below;
+- CLI workflow rules;
 - prompts, models, parameters, masks, sizes, formats, and output paths;
 - process handling, retries, fallback, inspection, validation, and reporting.
 
-This skill overrides only credential discovery and how the official CLI is launched. Do not create a second workflow, success gate, retry policy, run-state system, or output-validation checklist here. Do not add or remove official CLI arguments based on this skill.
+The wrapper owns credential discovery and launching the bundled CLI. Do not route execution through the host's separately installed imagegen Skill or its `image_gen.py`.
 
 ## Credential resolution
 
@@ -33,21 +33,23 @@ Resolve `OPENAI_BASE_URL` and `OPENAI_API_KEY` independently in this order, fill
 
 Use custom credentials only when both values are present. Never print the complete API key.
 
-## Official workflow handoff
+## Bundled workflow
 
-Let the official `$imagegen` skill determine the task, prompt, arguments, and validation steps first.
+Use this Skill's bundled CLI workflow to determine the task, prompt, arguments, and validation steps.
 
-When a complete custom credential pair is available, the only execution override is that the actual image request must use the official Image Gen CLI through this adapter, because the built-in image tool cannot receive a custom `OPENAI_BASE_URL`:
+When a complete custom credential pair is available, the actual image request must use the bundled Image Gen CLI through this adapter, because the built-in image tool cannot receive a custom `OPENAI_BASE_URL`:
 
 ```bash
-python3 "$CODEX_HOME/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" run -- generate <official-imagegen-cli-arguments>
+python3 "$CODEX_HOME/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" run -- generate <imagegen-cli-arguments>
 ```
 
-The adapter owns the interpreter and the path to the official `image_gen.py`. The first token after `--` must be the official CLI subcommand `generate`, `edit`, or `generate-batch`; pass only the remaining CLI arguments after that subcommand. Do **not** put `python`, `python3`, or `image_gen.py` after `run --` (for example, never use `run -- python3 .../image_gen.py generate ...`). The adapter injects `OPENAI_BASE_URL` and `OPENAI_API_KEY`, then invokes the unmodified official `image_gen.py`.
+The adapter owns the interpreter and the path to the bundled `scripts/image_gen.py`. The first token after `--` must be the CLI subcommand `generate`, `edit`, or `generate-batch`; pass only the remaining CLI arguments after that subcommand. Do **not** put `python`, `python3`, or `image_gen.py` after `run --` (for example, never use `run -- python3 .../image_gen.py generate ...`). The adapter injects `OPENAI_BASE_URL` and `OPENAI_API_KEY`, then invokes the bundled CLI.
 
-Do not routinely run `doctor`, `--help`, dry-run commands, source-file searches, directory inventories, or extra preflight checks. Use diagnostics only after a concrete credential or runtime failure. In particular, do not invent parameters such as `--input-fidelity`; use only arguments selected under the official skill's current rules.
+The bundled CLI accepts both standard OpenAI Images response forms: `data[].b64_json` and `data[].url`. URL responses are downloaded and then pass through the same local write and image-processing path as base64 responses.
 
-When no complete custom credential pair is available, stop applying this adapter and continue with the official `$imagegen` skill's normal top-level workflow. If the adapter reports a credential, runtime, authentication, network, or provider failure, follow the official skill's failure and fallback rules rather than defining new behavior here.
+Do not routinely run `doctor`, `--help`, dry-run commands, source-file searches, directory inventories, or extra preflight checks. Use diagnostics only after a concrete credential or runtime failure. In particular, do not invent parameters such as `--input-fidelity`; use only arguments supported by the bundled CLI.
+
+When no complete custom credential pair is available, stop applying the custom-endpoint path and report that credentials are missing. Do not silently switch to the host's separate imagegen CLI. If the adapter reports a credential, runtime, authentication, network, or provider failure, report that failure without routing to another imagegen implementation.
 
 ## Optional credential maintenance
 
@@ -57,4 +59,4 @@ These commands are maintenance tools, not normal generation steps:
 - `persist-env --yes`: copy reusable credentials into the project `.env`; run only with explicit user approval.
 - `setup-python --yes`, `set-python`, and `show-config`: repair or inspect the adapter runtime when a concrete runtime problem requires it.
 
-For normal requests, report only the credential source used and that the official workflow ran through `custom-cli`; let the official `$imagegen` skill provide all image-result reporting.
+For normal requests, report the credential source used and that the bundled CLI ran through `custom-cli`, together with the bundled workflow's image-result details.

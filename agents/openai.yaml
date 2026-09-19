@@ -1,6 +1,6 @@
 interface:
   display_name: "Image Gen Custom Env"
-  short_description: "Official Image Gen with custom credentials"
-  default_prompt: "Use $imagegen-custom-env to resolve and inject custom image API credentials, then let the official Image Gen skill handle the request."
+  short_description: "Bundled Image Gen with custom credentials"
+  default_prompt: "Use $imagegen-custom-env to resolve custom image API credentials and run only the bundled scripts/image_gen.py."
 policy:
   allow_implicit_invocation: true

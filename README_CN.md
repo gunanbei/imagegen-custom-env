@@ -2,11 +2,11 @@
 
 [中文](README.md) · [English](README_EN.md) · [日本語](README_JP.md)
 
-这是一个可独立安装的 Codex skill，为官方 `imagegen` 工作流增加项目级自定义凭据支持和专用 Python 运行时管理。
+这是一个可独立安装的 Codex skill，内置 `scripts/image_gen.py`，并提供项目级自定义凭据支持和专用 Python 运行时管理。
 
 ## 环境要求
 
-- 已安装 Codex 内置的 `imagegen` skill。
+- Python 3.8 或更高版本。
 - 启动包装脚本需要 Python 3.8 或更高版本。图像生成依赖可由 skill 自动配置专用 Python 3.12 运行时。
 
 ## 安装
@@ -36,7 +36,7 @@ ln -s /absolute/path/to/imagegen-custom-env \
 python "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" doctor
 ```
 
-实际生成时，`run` 会自行选择专用 Python 并定位官方 `image_gen.py`。因此 `--` 后必须直接从
+实际生成时，`run` 会自行选择专用 Python 并只调用 Skill 内置的 `scripts/image_gen.py`。因此 `--` 后必须直接从
 `generate`、`edit` 或 `generate-batch` 开始；不要再次传入 `python3` 或 `image_gen.py` 路径：
 
 ```bash

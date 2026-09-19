@@ -19,11 +19,11 @@ IMAGE_INTENT = re.compile(
 )
 
 CONTEXT = (
-    "检测到图像生成或编辑意图。优先使用 $imagegen-custom-env 技能：先读取 "
-    "其 SKILL.md 及官方 $imagegen 技能；由官方技能决定提示词、模型、参数、输出路径和验证；"
-    "若存在完整自定义凭据，通过 imagegen_custom_env.py run -- generate/edit/generate-batch 调用官方 image_gen.py；"
+    "检测到图像生成或编辑意图。使用 $imagegen-custom-env 技能及其内置脚本；"
+    "由该 Skill 决定提示词、模型、参数、输出路径和验证；"
+    "若存在完整自定义凭据，通过 imagegen_custom_env.py run -- generate/edit/generate-batch 调用内置 image_gen.py；"
     "run -- 后只放 CLI 子命令和参数，不要再次传 python/python3 或 image_gen.py 路径。"
-    "不要直接调用内置 image_gen 来绕过自定义 OPENAI_BASE_URL。"
+    "不要绕过 wrapper 直接调用宿主内置 image_gen 工具。"
 )
 
 
