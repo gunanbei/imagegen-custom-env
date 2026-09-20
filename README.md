@@ -74,6 +74,13 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/install_
 
 内置 CLI 同时支持 OpenAI Images API 的 `data[].b64_json` 和 `data[].url` 响应；URL 图片会先下载到本地，再按相同流程写入输出文件。
 
+非 dry-run 请求会生成 `.receipt.json`，记录本轮 `run_id`、绝对路径、SHA-256、实际尺寸/格式和请求尺寸/格式；明确请求尺寸时，实际宽高必须匹配。可使用以下命令查询并修改本地默认模型：
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen_custom_env.py" models
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom_env/scripts/imagegen_custom_env.py" set-model gpt-image-2
+```
+
 ## 版本管理
 
 使用语义化版本 Git 标签发布，例如：
