@@ -47,6 +47,10 @@ The adapter owns the interpreter and the path to the bundled `scripts/image_gen.
 
 The bundled CLI accepts both standard OpenAI Images response forms: `data[].b64_json` and `data[].url`. URL responses are downloaded and then pass through the same local write and image-processing path as base64 responses.
 
+Every non-dry-run generate, edit, or batch job validates that the output is a non-empty decodable image and, when an explicit size was requested, that the actual dimensions match it. A sibling `.receipt.json` records the run ID, absolute path, SHA-256, actual dimensions/format, and requested dimensions/format. A URL response may contain a different standard image format than requested; this is recorded rather than rejected.
+
+Use `models` to inspect the configured endpoint's available models and `set-model <model>` to persist a validated local default. A per-request `--model` still takes precedence. This Skill intentionally supports synchronous image endpoints only; it does not implement a provider-specific async task protocol.
+
 Do not routinely run `doctor`, `--help`, dry-run commands, source-file searches, directory inventories, or extra preflight checks. Use diagnostics only after a concrete credential or runtime failure. In particular, do not invent parameters such as `--input-fidelity`; use only arguments supported by the bundled CLI.
 
 When no complete custom credential pair is available, stop applying the custom-endpoint path and report that credentials are missing. Do not silently switch to the host's separate imagegen CLI. If the adapter reports a credential, runtime, authentication, network, or provider failure, report that failure without routing to another imagegen implementation.

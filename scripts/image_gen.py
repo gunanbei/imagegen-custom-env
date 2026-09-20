@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Fallback CLI for explicit image generation or editing with GPT Image models.
+"""Bundled CLI for explicit image generation or editing with GPT Image models.
 
-Used only when the user explicitly opts into CLI fallback mode, or when explicit
-transparent output requires the `gpt-image-1.5` fallback path.
+Used by imagegen-custom-env for its bundled image generation workflow.
 
 Defaults to gpt-image-2 and a structured prompt augmentation workflow.
 """
@@ -18,6 +17,8 @@ from pathlib import Path
 import re
 import sys
 import time
+import hashlib
+import uuid
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
@@ -25,7 +26,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from io import BytesIO
 
-DEFAULT_MODEL = "gpt-image-2"
+DEFAULT_MODEL = os.environ.get("IMAGE_MODEL", "gpt-image-2")
 DEFAULT_SIZE = "auto"
 DEFAULT_QUALITY = "medium"
 DEFAULT_OUTPUT_FORMAT = "png"
@@ -47,6 +48,10 @@ GPT_IMAGE_2_MAX_RATIO = 3.0
 
 MAX_IMAGE_BYTES = 50 * 1024 * 1024
 MAX_BATCH_JOBS = 500
+
+
+def _new_run_id() -> str:
+    return time.strftime("%Y%m%d-%H%M%S") + "-" + uuid.uuid4().hex[:8]
 
 
 def _die(message: str, code: int = 1) -> None:
@@ -153,9 +158,13 @@ def _validate_size(size: str, model: str) -> None:
         _validate_gpt_image_2_size(size)
         return
 
+    if size in ALLOWED_LEGACY_SIZES:
+        return
+    if _parse_size(size) is not None:
+        return
     if size not in ALLOWED_LEGACY_SIZES:
         _die(
-            "size must be one of 1024x1024, 1536x1024, 1024x1536, or auto for this GPT Image model."
+            "size must be auto, a supported legacy size, or WIDTHxHEIGHT for this image model."
         )
 
 
@@ -175,10 +184,8 @@ def _validate_input_fidelity(input_fidelity: Optional[str]) -> None:
 
 
 def _validate_model(model: str) -> None:
-    if not model.startswith(GPT_IMAGE_MODEL_PREFIX):
-        _die(
-            "model must be a GPT Image model (for example gpt-image-1.5, gpt-image-1, or gpt-image-1-mini)."
-        )
+    if not model.strip():
+        _die("model must not be empty.")
 
 
 def _validate_transparency(background: Optional[str], output_format: str) -> None:
@@ -418,7 +425,10 @@ def _decode_write_and_downscale(
     downscale_max_dim: Optional[int],
     downscale_suffix: str,
     output_format: str,
-) -> None:
+    requested_size: str = "auto",
+    run_id: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    artifacts: List[Dict[str, Any]] = []
     for idx, item in enumerate(items):
         if idx >= len(outputs):
             break
@@ -428,8 +438,31 @@ def _decode_write_and_downscale(
         out_path.parent.mkdir(parents=True, exist_ok=True)
 
         raw = _image_item_bytes(item)
+        try:
+            from PIL import Image
+            with Image.open(BytesIO(raw)) as image:
+                image.load()
+                actual_size = f"{image.width}x{image.height}"
+                actual_format = (image.format or "unknown").lower()
+        except Exception as exc:
+            _die(f"Image response is not a decodable image: {exc}")
+        if requested_size != "auto" and actual_size != requested_size:
+            _die(f"Image dimensions {actual_size} do not match requested size {requested_size}.")
         out_path.write_bytes(raw)
+        if not out_path.is_file() or out_path.stat().st_size == 0:
+            _die(f"Image output was not written correctly: {out_path}")
         print(f"Wrote {out_path}")
+        artifact = {
+            "run_id": run_id or _new_run_id(),
+            "path": str(out_path.resolve()),
+            "bytes": len(raw),
+            "sha256": hashlib.sha256(raw).hexdigest(),
+            "actual_size": actual_size,
+            "actual_format": actual_format,
+            "requested_size": requested_size,
+            "requested_format": output_format,
+        }
+        artifacts.append(artifact)
 
         if downscale_max_dim is None:
             continue
@@ -443,6 +476,25 @@ def _decode_write_and_downscale(
         )
         derived.write_bytes(resized)
         print(f"Wrote {derived}")
+    return artifacts
+
+
+def _write_receipt(*, run_id: str, operation: str, model: str, artifacts: List[Dict[str, Any]],
+                   requested_size: str, output_format: str) -> None:
+    if not artifacts:
+        _die("Image API returned no usable image artifacts.")
+    receipt_path = Path(artifacts[0]["path"]).with_suffix(".receipt.json")
+    payload = {
+        "run_id": run_id,
+        "status": "success",
+        "operation": operation,
+        "model": model,
+        "requested_size": requested_size,
+        "requested_format": output_format,
+        "artifacts": artifacts,
+    }
+    receipt_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"Wrote {receipt_path}")
 
 
 def _create_client():
@@ -590,6 +642,22 @@ def _is_transient_error(exc: Exception) -> bool:
     return "timeout" in msg or "timed out" in msg or "connection reset" in msg
 
 
+def _is_safe_single_retry(exc: Exception) -> bool:
+    if "timeout" in exc.__class__.__name__.lower() or "timed out" in str(exc).lower():
+        return False
+    status = getattr(exc, "status_code", None) or getattr(exc, "status", None)
+    if status in {502, 503}:
+        return True
+    msg = str(exc).lower()
+    return "connection reset" in msg or "connection aborted" in msg
+
+
+def _is_indeterminate_error(exc: Exception) -> bool:
+    name = exc.__class__.__name__.lower()
+    msg = str(exc).lower()
+    return "timeout" in name or "timed out" in msg or "read timeout" in msg
+
+
 async def _generate_one_with_retries(
     client: Any,
     payload: Dict[str, Any],
@@ -718,6 +786,7 @@ async def _run_generate_batch(args: argparse.Namespace) -> int:
             n=n,
             explicit_out=job.get("out"),
         )
+        run_id = _new_run_id()
         try:
             async with sem:
                 print(f"{job_label} starting", file=sys.stderr)
@@ -731,14 +800,19 @@ async def _run_generate_batch(args: argparse.Namespace) -> int:
                 elapsed = time.time() - started
                 print(f"{job_label} completed in {elapsed:.1f}s", file=sys.stderr)
             images = list(result.data)
-            _decode_write_and_downscale(
+            artifacts = _decode_write_and_downscale(
                 images,
                 outputs,
                 force=args.force,
                 downscale_max_dim=args.downscale_max_dim,
                 downscale_suffix=args.downscale_suffix,
                 output_format=effective_output_format,
+                requested_size=str(payload.get("size", "auto")),
+                run_id=run_id,
             )
+            _write_receipt(run_id=run_id, operation="generate-batch", model=str(payload.get("model", args.model)),
+                           artifacts=artifacts, requested_size=str(payload.get("size", "auto")),
+                           output_format=effective_output_format)
             return i, None
         except Exception as exc:
             any_failed = True
@@ -769,6 +843,7 @@ def _generate_batch(args: argparse.Namespace) -> None:
 
 
 def _generate(args: argparse.Namespace) -> None:
+    run_id = _new_run_id()
     prompt = _read_prompt(args.prompt, args.prompt_file)
     prompt = _augment_prompt(args, prompt)
 
@@ -812,22 +887,36 @@ def _generate(args: argparse.Namespace) -> None:
     )
     started = time.time()
     client = _create_client()
-    result = client.images.generate(**payload)
+    try:
+        result = client.images.generate(**payload)
+    except Exception as exc:
+        if _is_indeterminate_error(exc):
+            _die("Generation status is indeterminate after a client timeout; no automatic retry was attempted.", 24)
+        if not _is_safe_single_retry(exc):
+            raise
+        print(f"Transient generation error; retrying once: {exc.__class__.__name__}", file=sys.stderr)
+        time.sleep(min(60.0, _extract_retry_after_seconds(exc) or 2.0))
+        result = client.images.generate(**payload)
     elapsed = time.time() - started
     print(f"Generation completed in {elapsed:.1f}s.", file=sys.stderr)
 
     images = list(result.data)
-    _decode_write_and_downscale(
+    artifacts = _decode_write_and_downscale(
         images,
         output_paths,
         force=args.force,
         downscale_max_dim=args.downscale_max_dim,
         downscale_suffix=args.downscale_suffix,
         output_format=output_format,
+        requested_size=args.size,
+        run_id=run_id,
     )
+    _write_receipt(run_id=run_id, operation="generate", model=args.model, artifacts=artifacts,
+                   requested_size=args.size, output_format=output_format)
 
 
 def _edit(args: argparse.Namespace) -> None:
+    run_id = _new_run_id()
     prompt = _read_prompt(args.prompt, args.prompt_file)
     prompt = _augment_prompt(args, prompt)
 
@@ -893,19 +982,37 @@ def _edit(args: argparse.Namespace) -> None:
         request["image"] = image_files if len(image_files) > 1 else image_files[0]
         if mask_file is not None:
             request["mask"] = mask_file
-        result = client.images.edit(**request)
+        try:
+            result = client.images.edit(**request)
+        except Exception as exc:
+            if _is_indeterminate_error(exc):
+                _die("Edit status is indeterminate after a client timeout; no automatic retry was attempted.", 24)
+            if not _is_safe_single_retry(exc):
+                raise
+            print(f"Transient edit error; retrying once: {exc.__class__.__name__}", file=sys.stderr)
+            time.sleep(min(60.0, _extract_retry_after_seconds(exc) or 2.0))
+            with _open_files(image_paths) as retry_images, _open_mask(mask_path) as retry_mask:
+                retry_request = dict(payload)
+                retry_request["image"] = retry_images if len(retry_images) > 1 else retry_images[0]
+                if retry_mask is not None:
+                    retry_request["mask"] = retry_mask
+                result = client.images.edit(**retry_request)
 
     elapsed = time.time() - started
     print(f"Edit completed in {elapsed:.1f}s.", file=sys.stderr)
     images = list(result.data)
-    _decode_write_and_downscale(
+    artifacts = _decode_write_and_downscale(
         images,
         output_paths,
         force=args.force,
         downscale_max_dim=args.downscale_max_dim,
         downscale_suffix=args.downscale_suffix,
         output_format=output_format,
+        requested_size=args.size,
+        run_id=run_id,
     )
+    _write_receipt(run_id=run_id, operation="edit", model=args.model, artifacts=artifacts,
+                   requested_size=args.size, output_format=output_format)
 
 
 def _open_files(paths: List[Path]):
@@ -1001,7 +1108,7 @@ def _add_shared_args(parser: argparse.ArgumentParser) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Fallback CLI for explicit image generation or editing via GPT Image models"
+        description="Bundled CLI for image generation or editing via GPT Image models"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

@@ -19,6 +19,8 @@ except ImportError:  # pragma: no cover - exercised on older supported Pythons
 import ast
 import re
 import venv
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 REQUIRED_KEYS = ("OPENAI_BASE_URL", "OPENAI_API_KEY")
@@ -583,6 +585,56 @@ def _has_complete_custom_env(values: Dict[str, str]) -> bool:
     return all(values.get(key) for key in REQUIRED_KEYS)
 
 
+def _configured_model() -> str:
+    return _load_config().get("model", "gpt-image-2")
+
+
+def _models_endpoint(base_url: str) -> str:
+    return base_url.rstrip("/") + "/models"
+
+
+def models(args: argparse.Namespace) -> int:
+    values, _sources, _dotenv = _collect_env(Path(args.cwd))
+    if not _has_complete_custom_env(values):
+        print("Custom image endpoint credentials are unavailable.", file=sys.stderr)
+        return 20
+    request = Request(_models_endpoint(values["OPENAI_BASE_URL"]), headers={"Authorization": f"Bearer {values['OPENAI_API_KEY']}"})
+    try:
+        with urlopen(request, timeout=60) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, OSError, ValueError) as exc:
+        print(f"Failed to query models: {exc}", file=sys.stderr)
+        return 21
+    model_ids = sorted({str(item if isinstance(item, str) else item.get("id")) for item in payload.get("data", []) if (isinstance(item, str) or isinstance(item, dict)) and (item if isinstance(item, str) else item.get("id"))})
+    print(json.dumps({"current_model": _configured_model(), "models": model_ids}, indent=2, ensure_ascii=False))
+    return 0
+
+
+def set_model(args: argparse.Namespace) -> int:
+    requested = args.model_name.strip()
+    if not requested:
+        print("Model name cannot be empty.", file=sys.stderr)
+        return 2
+    values, _sources, _dotenv = _collect_env(Path(args.cwd))
+    if not _has_complete_custom_env(values):
+        print("Custom image endpoint credentials are unavailable.", file=sys.stderr)
+        return 20
+    request = Request(_models_endpoint(values["OPENAI_BASE_URL"]), headers={"Authorization": f"Bearer {values['OPENAI_API_KEY']}"})
+    try:
+        with urlopen(request, timeout=60) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, OSError, ValueError) as exc:
+        print(f"Failed to query models: {exc}", file=sys.stderr)
+        return 21
+    model_ids = {str(item if isinstance(item, str) else item.get("id")) for item in payload.get("data", []) if (isinstance(item, str) or isinstance(item, dict)) and (item if isinstance(item, str) else item.get("id"))}
+    if requested not in model_ids:
+        print(f"Model not found upstream: {requested}", file=sys.stderr)
+        return 22
+    config = _load_config(); config["model"] = requested; _save_config(config)
+    print(f"Configured default image model: {requested}")
+    return 0
+
+
 def _is_dry_run(forwarded_args: Iterable[str]) -> bool:
     return "--dry-run" in set(forwarded_args)
 
@@ -781,6 +833,7 @@ def run(args: argparse.Namespace) -> int:
 
     run_env = os.environ.copy()
     run_env.update({key: env_values[key] for key in REQUIRED_KEYS})
+    run_env["IMAGE_MODEL"] = _configured_model()
     source_label = _source_label(sources)
     missing_in_env = [
         key
@@ -810,6 +863,8 @@ def run(args: argparse.Namespace) -> int:
     if completed.returncode == 0 or _is_dry_run(args.imagegen_args):
         return completed.returncode
 
+    if "indeterminate" in (completed.stderr + "\n" + completed.stdout).lower():
+        return 24
     if _looks_like_provider_failure(completed.returncode, completed.stderr + "\n" + completed.stdout):
         print(
             "Custom image endpoint failed with an API/auth/network/provider error. "
@@ -946,6 +1001,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Do not attempt automatic dedicated runtime setup when no compatible python is available.",
     )
     run_parser.set_defaults(func=run)
+
+    models_parser = subparsers.add_parser("models", help="List models exposed by the configured endpoint.")
+    models_parser.set_defaults(func=models)
+
+    set_model_parser = subparsers.add_parser("set-model", help="Set the local default model after upstream validation.")
+    set_model_parser.add_argument("model_name")
+    set_model_parser.set_defaults(func=set_model)
 
     setup_parser = subparsers.add_parser(
         "setup-python",
