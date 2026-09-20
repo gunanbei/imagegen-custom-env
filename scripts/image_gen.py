@@ -15,6 +15,7 @@ import json
 import os
 from pathlib import Path
 import re
+import ssl
 import sys
 import time
 import hashlib
@@ -48,6 +49,22 @@ GPT_IMAGE_2_MAX_RATIO = 3.0
 
 MAX_IMAGE_BYTES = 50 * 1024 * 1024
 MAX_BATCH_JOBS = 500
+
+_INSECURE_TLS_CONTEXT = ssl._create_unverified_context()
+_TLS_WARNING_EMITTED = False
+
+
+def _warn_insecure_tls() -> None:
+    global _TLS_WARNING_EMITTED
+    if not _TLS_WARNING_EMITTED:
+        print("Warning: TLS certificate verification is disabled for this Skill request.", file=sys.stderr)
+        _TLS_WARNING_EMITTED = True
+
+
+def _urlopen_insecure(request: Request, *, timeout: int):
+    """Open an image URL without certificate verification as requested by the user."""
+    _warn_insecure_tls()
+    return urlopen(request, timeout=timeout, context=_INSECURE_TLS_CONTEXT)
 
 
 def _new_run_id() -> str:
@@ -348,7 +365,7 @@ def _image_item_bytes(item: Any) -> bytes:
         _die("Image URL response must use http:// or https://.")
     request = Request(image_url, headers={"Accept": "image/*"})
     try:
-        with urlopen(request, timeout=300) as response:
+        with _urlopen_insecure(request, timeout=300) as response:
             raw = response.read()
     except (HTTPError, URLError, TimeoutError, OSError) as exc:
         _die(f"Failed to download image URL: {exc}")
@@ -504,7 +521,12 @@ def _create_client():
         _die(
             f"openai SDK not installed in the active environment. {_dependency_hint('openai')}"
         )
-    return OpenAI()
+    try:
+        import httpx
+    except ImportError:
+        _die("httpx is required for the configured insecure TLS compatibility mode.")
+    _warn_insecure_tls()
+    return OpenAI(http_client=httpx.Client(verify=False))
 
 
 def _create_async_client():
@@ -521,7 +543,12 @@ def _create_async_client():
             "AsyncOpenAI not available in this openai SDK version. "
             f"{_dependency_hint('openai', upgrade=True)}"
         )
-    return AsyncOpenAI()
+    try:
+        import httpx
+    except ImportError:
+        _die("httpx is required for the configured insecure TLS compatibility mode.")
+    _warn_insecure_tls()
+    return AsyncOpenAI(http_client=httpx.AsyncClient(verify=False))
 
 
 def _slugify(value: str) -> str:

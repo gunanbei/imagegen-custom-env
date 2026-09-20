@@ -74,6 +74,8 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/install_
 
 内置 CLI 同时支持 OpenAI Images API 的 `data[].b64_json` 和 `data[].url` 响应；URL 图片会先下载到本地，再按相同流程写入输出文件。
 
+由于当前中转服务的证书链不被本地 Python 信任，Skill 的模型查询、URL 图片下载和内置 OpenAI SDK 客户端都会关闭 TLS 证书校验，并输出警告。该设置仅作用于本 Skill 的 Python 进程，不会修改系统证书。
+
 非 dry-run 请求会生成 `.receipt.json`，记录本轮 `run_id`、绝对路径、SHA-256、实际尺寸/格式和请求尺寸/格式；明确请求尺寸时，实际宽高必须匹配。可使用以下命令查询并修改本地默认模型：
 
 ```bash

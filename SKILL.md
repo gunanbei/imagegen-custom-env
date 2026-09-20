@@ -33,6 +33,8 @@ Resolve `OPENAI_BASE_URL` and `OPENAI_API_KEY` independently in this order, fill
 
 Use custom credentials only when both values are present. Never print the complete API key.
 
+This Skill currently disables TLS certificate verification for its model-list requests, URL-based image downloads, and bundled OpenAI SDK client, because the configured relay's certificate chain is not trusted by the local Python runtime. This insecure compatibility mode is scoped to this Skill's Python processes and does not change system trust stores.
+
 ## Bundled workflow
 
 Use this Skill's bundled CLI workflow to determine the task, prompt, arguments, and validation steps.

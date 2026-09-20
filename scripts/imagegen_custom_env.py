@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import platform
+import ssl
 import shlex
 import shutil
 import subprocess
@@ -593,6 +594,11 @@ def _models_endpoint(base_url: str) -> str:
     return base_url.rstrip("/") + "/models"
 
 
+def _urlopen_insecure(request: Request, *, timeout: int):
+    print("Warning: TLS certificate verification is disabled for this Skill request.", file=sys.stderr)
+    return urlopen(request, timeout=timeout, context=ssl._create_unverified_context())
+
+
 def models(args: argparse.Namespace) -> int:
     values, _sources, _dotenv = _collect_env(Path(args.cwd))
     if not _has_complete_custom_env(values):
@@ -600,7 +606,7 @@ def models(args: argparse.Namespace) -> int:
         return 20
     request = Request(_models_endpoint(values["OPENAI_BASE_URL"]), headers={"Authorization": f"Bearer {values['OPENAI_API_KEY']}"})
     try:
-        with urlopen(request, timeout=60) as response:
+        with _urlopen_insecure(request, timeout=60) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except (HTTPError, URLError, TimeoutError, OSError, ValueError) as exc:
         print(f"Failed to query models: {exc}", file=sys.stderr)
@@ -621,7 +627,7 @@ def set_model(args: argparse.Namespace) -> int:
         return 20
     request = Request(_models_endpoint(values["OPENAI_BASE_URL"]), headers={"Authorization": f"Bearer {values['OPENAI_API_KEY']}"})
     try:
-        with urlopen(request, timeout=60) as response:
+        with _urlopen_insecure(request, timeout=60) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except (HTTPError, URLError, TimeoutError, OSError, ValueError) as exc:
         print(f"Failed to query models: {exc}", file=sys.stderr)
