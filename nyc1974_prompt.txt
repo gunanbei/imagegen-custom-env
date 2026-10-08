@@ -1,0 +1,12 @@
+Use case: historical-scene, photorealistic-natural
+Asset type: archival fashion street photograph
+Primary request: Create a candid, documentary-style, photo-realistic 1974 street fashion snapshot in downtown New York City, as if captured spontaneously on 35mm color film.
+Scene/backdrop: A busy Manhattan avenue in the 1970s, towering office buildings, city buses, yellow taxis, a bus stop sign, and pedestrians in authentic period clothing such as flared jeans and leather jackets. Background elements are softly rendered with natural depth of field.
+Subject: A smiling young adult woman stands in the center of the sidewalk with both hands in her pockets, naturally confident, looking directly into the camera. She has long feathered honey-blonde wavy hair with center-parted bangs, natural makeup, and warm sun-kissed skin.
+Wardrobe: Authentic 1970s rust-copper striped one-piece outfit with a bare upper chest and matching high-waisted wide-leg trousers, a thick fabric belt with a large square buckle, and a small dark-brown leather crossbody bag at her waist.
+Style/medium: Unposed 35mm color film street photography, archival fashion snapshot, realistic human anatomy and face, subtle analog grain.
+Composition/framing: Vertical portrait orientation, imperfect candid framing, documentary viewpoint, subject centered on the sidewalk with environmental context, slight motion blur among the crowd.
+Lighting/mood: Soft overcast daylight, gentle vintage film colors, natural contrast, unpolished and spontaneous.
+Color palette: Muted warm retro tones, rust copper, honey gold, dark brown leather, concrete gray, glass and metal highlights.
+Materials/textures: Authentic fabric weave, worn leather, concrete, reflective glass, brushed metal, realistic film grain.
+Constraints: Make it look like an actual 1974 archival photograph, not a modern staged fashion shoot. No text overlays, no watermark, no logos, no contemporary objects, no smartphones, no modern cars, no glossy commercial retouching, no exaggerated HDR, no plastic skin, no extra limbs or distorted hands.

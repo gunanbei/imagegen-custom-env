@@ -46,7 +46,7 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/imagegen
 
 ## 可选：安装图像优先 Hook
 
-仓库附带一个宿主级 `UserPromptSubmit` Hook。Skill 更新/克隆**不会自动修改宿主配置**；
+仓库附带一个宿主级 `UserPromptSubmit` Hook。安装器按 Codex 当前的 `hooks.UserPromptSubmit` 配置结构写入，并把 Hook 副本放到 `${CODEX_HOME:-$HOME/.codex}/hooks/`；Skill 更新/克隆**不会自动修改宿主配置**；
 首次安装 Hook 时，安装器会先申请确认，确认后才写入。它只在检测到图像生成/编辑意图时注入
 `$imagegen-custom-env` 使用规则，不会覆盖已有 Hook，也不能仅靠提示强制替换宿主工具；
 真正执行时 wrapper 只调用仓库内置的 `scripts/image_gen.py`。安装前请确认你希望修改 `~/.codex/hooks.json`：
@@ -67,8 +67,32 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/install_
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/install_hook.py" --remove
 ```
 
-修改宿主 Hook 后请重启 Codex。若当前宿主不支持 `hookSpecificOutput`，该 Hook 会安全地
-返回空对象，不影响普通请求。
+### Windows 安装
+
+在 PowerShell 中运行。命令会优先使用 `CODEX_HOME`，否则使用 `$HOME\.codex`：
+
+```powershell
+$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }
+py -3 (Join-Path $codexHome "skills/imagegen-custom-env/scripts/install_hook.py") --yes
+```
+
+也可以指定自定义配置路径，便于先在临时目录验证：
+
+```powershell
+py -3 "C:\path\to\imagegen-custom-env\scripts\install_hook.py" `
+  --hooks-file (Join-Path $env:TEMP "codex-hooks.json") --yes
+```
+
+安装器会在 `UserPromptSubmit` 命令 Hook 中同时写入 `command` 和 Codex
+官方支持的 `commandWindows`。Windows 执行时使用 Python Launcher 的 `py -3`，
+不依赖 Unix shell；移除命令同样适用：
+
+```powershell
+$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }
+py -3 (Join-Path $codexHome "skills/imagegen-custom-env/scripts/install_hook.py") --remove --yes
+```
+
+以上命令要求 Python Launcher `py` 可用。安装或移除 Hook 后请重启 Codex。
 
 仓库根目录就是 skill 根目录。`SKILL.md`、`agents/openai.yaml`、`scripts/imagegen_custom_env.py` 和内置的 `scripts/image_gen.py` 均为必需运行文件。本地密钥、专用虚拟环境和生成的字节码不会纳入版本控制。
 

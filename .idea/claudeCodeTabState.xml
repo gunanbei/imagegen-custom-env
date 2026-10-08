@@ -8,7 +8,7 @@
             <TabSessionState>
               <option name="provider" value="claude" />
               <option name="cwd" value="$PROJECT_DIR$" />
-              <option name="model" value="claude-sonnet-5" />
+              <option name="model" value="claude-sonnet-5[1m]" />
               <option name="permissionMode" value="acceptEdits" />
             </TabSessionState>
           </value>

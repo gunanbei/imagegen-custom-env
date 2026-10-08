@@ -1,0 +1,20 @@
+{
+  "run_id": "20260920-205621-a1efc9f7",
+  "status": "success",
+  "operation": "generate",
+  "model": "gpt-image-2",
+  "requested_size": "2160x3840",
+  "requested_format": "png",
+  "artifacts": [
+    {
+      "run_id": "20260920-205621-a1efc9f7",
+      "path": "/Users/gunanbei/Documents/ChatGPT/imagegen-custom-env/output/nyc-1974-street-snapshot.png",
+      "bytes": 11508466,
+      "sha256": "c294a2b83897e1499f429b1191e8233b062e5d5bf3201d911b802f10bdcb467c",
+      "actual_size": "2160x3840",
+      "actual_format": "png",
+      "requested_size": "2160x3840",
+      "requested_format": "png"
+    }
+  ]
+}

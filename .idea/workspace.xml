@@ -30,7 +30,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6692a211-0dec-4239-8dd9-a09ead16b5b5" name="更改" comment="" />
+    <list default="true" id="6692a211-0dec-4239-8dd9-a09ead16b5b5" name="更改" comment="fix(tls): 为中转服务禁用 TLS 证书校验&#10;&#10;由于当前配置的中转服务证书链不被本地 Python 运行时信任,在以下三个场景中禁用 TLS 证书校验:&#10;- `imagegen_custom_env.py` 中的模型查询请求 (`models`, `set_model` 命令)&#10;- `image_gen.py` 中基于 URL 的图片下载 (urllib)&#10;- `image_gen.py` 中使用 OpenAI SDK 客户端时 (通过 httpx.Client/AsyncClient)&#10;&#10;所有禁用证书校验的操作都会向 stderr 输出警告,且仅作用于本 Skill 的 Python 进程,不修改系统证书存储。在 README.md 和 SKILL.md 中补充了相关说明。" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -77,20 +77,21 @@
     <option name="showMembers" value="true" />
     <option name="showVisibilityIcons" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.go.formatter.settings.were.checked": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "main",
-    "kotlin-language-version-configured": "true",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "qoder.settings.plugin"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/gunanbei/Documents/ChatGPT/imagegen-custom-env&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;qoder.settings.plugin&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -132,7 +133,11 @@
     <MESSAGE value="docs(imagegen): 更新图像生成运行隔离和状态管理文档&#10;&#10;- 添加飞行中处理和明确的状态定义（预检、运行中、成功、失败、阻塞或不确定）&#10;- 强调预检证据仅用于缺失目标文件的预期情况，不得报告为提供程序故障&#10;- 明确单个运行只启动一个提供程序命令并等待其达到终端状态&#10;- 规定进程中断或超时时标记为不确定状态而非失败状态&#10;- 细化重试规则，禁止基于缺失文件等情况进行重试&#10;- 更新机器可检查结果报告，添加不确定状态和未解决证据的记录要求" />
     <MESSAGE value="refactor(docs): 简化运行安全性和成功检查流程&#10;&#10;- 将独立运行隔离、飞行中处理和成功检查重命名为轻量级运行安全性&#10;- 简化运行状态管理，每次只使用一个运行状态&#10;- 优化预检验证逻辑，仅执行必要的本地参数检查&#10;- 简化文件名选择和哈希记录逻辑&#10;- 优化提供商命令调用和完成等待机制&#10;- 改进不确定状态的处理方式，避免重复调用" />
     <MESSAGE value="docs(imagegen-custom-env): 更新文档以反映官方图像生成适配器功能&#10;&#10;- 简化描述为官方图像生成技能的自定义凭证适配器&#10;- 移除过时的执行流程和复杂的凭证回退逻辑&#10;- 更新为仅处理凭证解析和官方CLI调用委托&#10;- 删除冗余的Python运行时管理和诊断命令说明&#10;- 重写文档结构以突出与官方imagegen技能的所有权边界&#10;- 移除详细的执行状态管理规则，改为依赖官方工作流" />
-    <option name="LAST_COMMIT_MESSAGE" value="docs(imagegen-custom-env): 更新文档以反映官方图像生成适配器功能&#10;&#10;- 简化描述为官方图像生成技能的自定义凭证适配器&#10;- 移除过时的执行流程和复杂的凭证回退逻辑&#10;- 更新为仅处理凭证解析和官方CLI调用委托&#10;- 删除冗余的Python运行时管理和诊断命令说明&#10;- 重写文档结构以突出与官方imagegen技能的所有权边界&#10;- 移除详细的执行状态管理规则，改为依赖官方工作流" />
+    <MESSAGE value="docs: 补充 run 子命令用法说明并统一 python3 调用&#10;&#10;- README 系列文档（中英日）：新增 `run --` 用法说明段落，明确 `--` 后&#10;  只接受 `generate/edit/generate-batch` 等子命令及其参数，不要再次传入&#10;  `python3` 或 `image_gen.py` 路径，避免用户混淆调用方式&#10;- README.md/README_EN.md：将验证命令中的 `python` 统一改为 `python3`&#10;- SKILL.md：更新执行示例，说明适配器自行管理解释器和官方脚本路径，&#10;  强调 `--` 后首个 token 必须是子命令&#10;- hooks/imagegen-priority-hook.py：Hook 上下文提示同步更新调用约定&#10;- scripts/imagegen_custom_env.py：新增 `_validate_forwarded_args` 函数，&#10;  在 argparse 前拦截多余的 python/image_gen.py 前缀，将混淆的&#10;  &quot;invalid choice&quot; 错误转换为可操作的调用提示&#10;- 清理文件末尾多余空行（README_CN.md, README_EN.md, README_JP.md）" />
+    <MESSAGE value="&#10;docs: 更新文档说明 Skill 内置 image_gen.py 并独立执行&#10;&#10;- README*.md：移除对宿主 imagegen skill 的依赖说明，改为强调&#10;  Skill 内置 `scripts/image_gen.py` 并自行管理执行流程&#10;- SKILL.md：明确 ownership 边界，说明 wrapper 只调用仓库内置&#10;  CLI，不再路由到宿主的 imagegen 工具；补充内置 CLI 同时支持&#10;  OpenAI Images API 的 b64_json 和 url 响应形式&#10;- agents/openai.yaml：更新 display_name 和 default_prompt，反映&#10;  bundled CLI 的独立性&#10;- hooks/imagegen-priority-hook.py：调整注释措辞，强调注入使用&#10;  规则而非优先级覆盖，澄清 wrapper 实际调用内置脚本" />
+    <MESSAGE value="feat(imagegen): 添加生成验证、回执记录与模型管理功能&#10;&#10;- 验证与回执：每次非 dry-run 的 generate/edit/batch 操作现在验证输出是否为可解码的非空图像，当请求了明确尺寸时验证实际尺寸是否匹配。生成 `.receipt.json` 文件记录 run ID、绝对路径、SHA-256、实际与请求的尺寸/格式等元数据（scripts/image_gen.py: _decode_write_and_downscale, _write_receipt）&#10;- 模型管理：新增 `models` 和 `set-model` 命令用于检查可用模型并持久化本地默认模型，支持通过 IMAGE_MODEL 环境变量配置默认模型（scripts/image_gen.py: DEFAULT_MODEL, _list_models, _set_model）&#10;- 错误处理增强：为 generate 和 edit 操作添加针对瞬态错误的单次自动重试机制，超时等不确定状态错误会明确返回特定退出码（24）而非静默重试（scripts/image_gen.py: _is_safe_single_retry, _is_indeterminate_error）&#10;- 尺寸验证改进：放宽 legacy 模型的尺寸验证规则，支持自定义 WIDTHxHEIGHT 格式（scripts/image_gen.py: _validate_size）&#10;- 文档更新：明确 Skill 仅支持同步端点，不实现异步任务协议；更新 CLI 描述为 bundled 实现（SKILL.md）" />
+    <MESSAGE value="fix(tls): 为中转服务禁用 TLS 证书校验&#10;&#10;由于当前配置的中转服务证书链不被本地 Python 运行时信任,在以下三个场景中禁用 TLS 证书校验:&#10;- `imagegen_custom_env.py` 中的模型查询请求 (`models`, `set_model` 命令)&#10;- `image_gen.py` 中基于 URL 的图片下载 (urllib)&#10;- `image_gen.py` 中使用 OpenAI SDK 客户端时 (通过 httpx.Client/AsyncClient)&#10;&#10;所有禁用证书校验的操作都会向 stderr 输出警告,且仅作用于本 Skill 的 Python 进程,不修改系统证书存储。在 README.md 和 SKILL.md 中补充了相关说明。" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix(tls): 为中转服务禁用 TLS 证书校验&#10;&#10;由于当前配置的中转服务证书链不被本地 Python 运行时信任,在以下三个场景中禁用 TLS 证书校验:&#10;- `imagegen_custom_env.py` 中的模型查询请求 (`models`, `set_model` 命令)&#10;- `image_gen.py` 中基于 URL 的图片下载 (urllib)&#10;- `image_gen.py` 中使用 OpenAI SDK 客户端时 (通过 httpx.Client/AsyncClient)&#10;&#10;所有禁用证书校验的操作都会向 stderr 输出警告,且仅作用于本 Skill 的 Python 进程,不修改系统证书存储。在 README.md 和 SKILL.md 中补充了相关说明。" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

@@ -4,7 +4,8 @@
       "hooks": [
         {
           "type": "command",
-          "command": "python3 /absolute/path/to/imagegen-custom-env/hooks/imagegen-priority-hook.py"
+          "command": "python3 /absolute/path/to/imagegen-custom-env/hooks/imagegen-priority-hook.py",
+          "commandWindows": "py -3 \"C:\\absolute\\path\\to\\imagegen-custom-env\\hooks\\imagegen-priority-hook.py\""
         }
       ]
     }
