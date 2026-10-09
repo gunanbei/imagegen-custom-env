@@ -51,19 +51,18 @@ from version control.
 
 ## Optional image-priority hook
 
-Install it from PowerShell with Python Launcher:
+Install it from PowerShell with Python Launcher. Run the entire line; it does
+not depend on a variable set by a previous command:
 
 ```powershell
-$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }
-py -3 (Join-Path $codexHome "skills/imagegen-custom-env/scripts/install_hook.py") --yes
+py -3 (Join-Path $(if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path ([Environment]::GetFolderPath('UserProfile')) '.codex' }) 'skills/imagegen-custom-env/scripts/install_hook.py') --yes
 ```
 
 The installer preserves existing hooks and writes both `command` and Codex's
 Windows-specific `commandWindows` field. To remove it:
 
 ```powershell
-$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }
-py -3 (Join-Path $codexHome "skills/imagegen-custom-env/scripts/install_hook.py") --remove --yes
+py -3 (Join-Path $(if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path ([Environment]::GetFolderPath('UserProfile')) '.codex' }) 'skills/imagegen-custom-env/scripts/install_hook.py') --remove --yes
 ```
 
 These commands require the Python Launcher (`py`) to be available. Restart

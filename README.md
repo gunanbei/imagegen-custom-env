@@ -69,11 +69,10 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/imagegen-custom-env/scripts/install_
 
 ### Windows 安装
 
-在 PowerShell 中运行。命令会优先使用 `CODEX_HOME`，否则使用 `$HOME\.codex`：
+在 PowerShell 中复制并执行完整的一行命令。命令会优先使用 `CODEX_HOME`，否则使用 Windows 用户目录下的 `.codex`；不依赖前一行设置的变量：
 
 ```powershell
-$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }
-py -3 (Join-Path $codexHome "skills/imagegen-custom-env/scripts/install_hook.py") --yes
+py -3 (Join-Path $(if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path ([Environment]::GetFolderPath('UserProfile')) '.codex' }) 'skills/imagegen-custom-env/scripts/install_hook.py') --yes
 ```
 
 也可以指定自定义配置路径，便于先在临时目录验证：
@@ -88,8 +87,7 @@ py -3 "C:\path\to\imagegen-custom-env\scripts\install_hook.py" `
 不依赖 Unix shell；移除命令同样适用：
 
 ```powershell
-$codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME ".codex" }
-py -3 (Join-Path $codexHome "skills/imagegen-custom-env/scripts/install_hook.py") --remove --yes
+py -3 (Join-Path $(if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path ([Environment]::GetFolderPath('UserProfile')) '.codex' }) 'skills/imagegen-custom-env/scripts/install_hook.py') --remove --yes
 ```
 
 以上命令要求 Python Launcher `py` 可用。安装或移除 Hook 后请重启 Codex。
